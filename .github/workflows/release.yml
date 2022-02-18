@@ -6,6 +6,9 @@ on:
       nodeVersion:
         description: "Node.js version"
         required: true
+  push:
+    tags:
+      - v*
 
 env:
   LIBNODE_NODE_VERSION: ${{ github.event.inputs.nodeVersion }}
