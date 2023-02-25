@@ -17,9 +17,11 @@ jobs:
   build:
     strategy:
       fail-fast: false
-    runs-on: m1max
+      matrix:
+        small_icu: [0, 1]
+    runs-on: macos-12
     env:
-      LIBNODE_X86: 0
+      LIBNODE_ARCH: 'arm64'
       LIBNODE_SMALL_ICU: 1
     steps:
       - name: Checkout code
@@ -30,21 +32,23 @@ jobs:
           python-version: '3.x'
 
       - name: Install ninja on macOS
-        run: HOMEBREW_NO_AUTO_UPDATE=1 arch -arm64 brew install ninja
+        run: HOMEBREW_NO_AUTO_UPDATE=1 brew install ninja
 
       - name: Download source code of Node.js
-        run: arch -arm64 python -m scripts.download
+        run: python -m scripts.download
 
       - name: Patch source code of Node.js
-        run: arch -arm64 python -m scripts.patch
+        run: python -m scripts.patch
 
       - name: Build
-        run: arch -arm64 python -m scripts.build
+        run: |
+          export CC="cc -arch arm64"
+          export CXX="c++ -arch arm64"
+          python -m scripts.build
 
       - name: Copy headers
-        run: arch -arm64 python -m scripts.headers
+        run: python -m scripts.headers
 
-      - uses: ilammy/msvc-dev-cmd@v1
       - name: Postprocess
         run: python -m scripts.postproc
 
@@ -62,4 +66,14 @@ jobs:
           path: ${{ steps.archive.outputs.zipname }}
 
       - name: Test
-        run: python -m scripts.test
+        run: objdump -t libnode/lib/libnode.a | grep 'file format'
+
+      - name: Upload Release Asset
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ github.event.release.upload_url }}
+          asset_path: ${{ steps.archive.outputs.zipname }}
+          asset_name: ${{ steps.archive.outputs.zipname }}
+          asset_content_type: application/zip
