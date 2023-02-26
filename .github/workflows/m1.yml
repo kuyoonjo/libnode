@@ -17,8 +17,6 @@ jobs:
   build:
     strategy:
       fail-fast: false
-      matrix:
-        small_icu: [0, 1]
     runs-on: macos-12
     env:
       LIBNODE_ARCH: 'arm64'
@@ -42,9 +40,14 @@ jobs:
 
       - name: Build
         run: |
-          export CC="cc -arch arm64"
-          export CXX="c++ -arch arm64"
-          python -m scripts.build
+          export CC_host="cc -arch x86_64"
+          export CXX_host="c++ -arch x86_64"
+          export CC_target="cc -arch arm64"
+          export CXX_target="c++ -arch arm64"
+          cd $LIBNODE_NODE_VERSION
+          ./configure --dest-cpu=arm64 --enable-static --with-intl=small-icu
+          make -j4
+          cd ..
 
       - name: Copy headers
         run: python -m scripts.headers
