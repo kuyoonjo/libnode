@@ -45,10 +45,9 @@ jobs:
           export CC="cc -arch arm64"
           export CXX="c++ -arch arm64"
           cd node-$LIBNODE_NODE_VERSION
-          ./configure --dest-cpu=arm64 --cross-compiling --dest-os=mac --enable-static --without-intl --without-snapshot
+          ./configure --dest-cpu=arm64 --cross-compiling --dest-os=mac --enable-static --with-intl=small-icu
           make -j4
           cd ..
-          objdump -t libnode/lib/libnode.a | grep 'file format'
 
       - name: Copy headers
         run: python -m scripts.headers
@@ -67,7 +66,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: ${{ steps.archive.outputs.zipname }}
-          path: ${{ steps.archive.outputs.zipname }}ZZ
+          path: ${{ steps.archive.outputs.zipname }}
 
       - name: Upload Release Asset
         uses: actions/upload-release-asset@v1
@@ -78,3 +77,6 @@ jobs:
           asset_path: ${{ steps.archive.outputs.zipname }}
           asset_name: ${{ steps.archive.outputs.zipname }}
           asset_content_type: application/zip
+
+      - name: Objdump
+        run: objdump -t libnode/lib/libnode.a | grep 'file format'
